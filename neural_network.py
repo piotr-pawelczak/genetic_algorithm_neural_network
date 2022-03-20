@@ -5,7 +5,7 @@ from typing import List
 import os
 
 class NeuralNetwork:
-
+    
     def __init__(self):
         """
         Initialize neural network with:
@@ -54,7 +54,8 @@ class NeuralNetwork:
         return self.model.get_weights()
 
     def get_accuracy(self, x: np.ndarray, y: np.ndarray, batch_size=10) -> float:
-        """_summary_
+        """ 
+        Return accuracy of model based on input arrays
 
         Args:
             x (np.ndarray): feature data
@@ -67,3 +68,19 @@ class NeuralNetwork:
         self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
         loss, acc = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)
         return acc
+
+    def get_loss(self, x: np.ndarray, y: np.ndarray, batch_size=10) -> float:
+        """ 
+        Return loss of model based on input arrays
+
+        Args:
+            x (np.ndarray): feature data
+            y (np.ndarray): labels
+            batch_size (int, optional): batch size. Defaults to 10.
+
+        Returns:
+            float: loss value
+        """        
+        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+        loss, acc = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)
+        return loss
