@@ -1,0 +1,32 @@
+from neural_network import NeuralNetwork
+from genetic_algorithm import GeneticAlgorithm
+import os
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+# Disable CUDA warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+# Load data
+df = pd.read_csv('../heart.csv')
+df.rename(columns={'output': 'hearth_attack_chance'}, inplace=True)
+x = df.drop('hearth_attack_chance', axis=1)
+y = df['hearth_attack_chance']
+x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.7, random_state=1)
+
+# Scale data
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
+
+model = NeuralNetwork()
+ga = GeneticAlgorithm(5, x_train, y_train)
+ga.generate_population()
+
+
+chromosome = ga.population[0]
+loss = ga.get_fitness(model, chromosome, 'loss')
+accuracy = ga.get_fitness(model, chromosome, 'accuracy')
+print(f'{accuracy} - {loss}')
+
