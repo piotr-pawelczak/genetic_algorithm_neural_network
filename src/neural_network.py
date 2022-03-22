@@ -1,5 +1,5 @@
 """
-Module docstring
+TODO Module docstring
 """
 
 from typing import List
@@ -8,7 +8,7 @@ from keras.layers import Dense
 import numpy as np
 
 class NeuralNetwork:
-    """_summary_
+    """ TODO class docstring
     """
 
     def __init__(self):
