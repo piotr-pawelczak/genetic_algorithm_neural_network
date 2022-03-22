@@ -1,9 +1,15 @@
+"""
+Module docstring
+"""
+
+from typing import List
 from keras import Sequential
 from keras.layers import Dense
 import numpy as np
-from typing import List
 
 class NeuralNetwork:
+    """_summary_
+    """
 
     def __init__(self):
         """
@@ -53,7 +59,7 @@ class NeuralNetwork:
         return self.model.get_weights()
 
     def get_accuracy(self, x: np.ndarray, y: np.ndarray, batch_size=10) -> float:
-        """ 
+        """
         Return accuracy of model based on input arrays
 
         Args:
@@ -63,13 +69,13 @@ class NeuralNetwork:
 
         Returns:
             float: accuracy value
-        """        
+        """         
         self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-        loss, acc = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)
+        acc = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)[1]
         return acc
 
     def get_loss(self, x: np.ndarray, y: np.ndarray, batch_size=10) -> float:
-        """ 
+        """
         Return loss of model based on input arrays
 
         Args:
@@ -81,5 +87,5 @@ class NeuralNetwork:
             float: loss value
         """        
         self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-        loss, acc = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)
+        loss = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)[0]
         return loss
