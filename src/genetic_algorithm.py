@@ -2,6 +2,7 @@
 TODO module docstring
 """
 
+from operator import index
 import numpy as np
 from neural_network import NeuralNetwork
 from typing import Tuple
@@ -70,6 +71,8 @@ class GeneticAlgorithm():
             fitness = 1 / (loss + 0.000001)
         return fitness
 
+    """ PARENT SELECT """
+
     def select_roulette(self) -> np.ndarray:
         """
         Args:
@@ -83,6 +86,22 @@ class GeneticAlgorithm():
 
         chromosome_probabilities = [chromosome_fitness/total_fitness for chromosome_fitness in population_fitness]
         return np.random.choice(self.population, size=self.num_parents, p=chromosome_probabilities, replace=False)
+
+    def select_elite(self) -> np.ndarray:
+        """
+        Args:
+            num_parents (int): number of parents
+
+        Returns:
+            np.ndarray: array of parents selected by roulette wheel selection method
+        """
+        elite_population = []
+        population_fitness = list(map(lambda chromosome: self.get_fitness(chromosome, self.metric_type), self.population))
+        for i in range(self.num_parents):
+            index = population_fitness.index(max(population_fitness))
+            elite_population.append(self.population[index])
+            population_fitness[index]=-99999999
+        return elite_population
 
     """ CROSSOVER """
     # TODO consider adding crossover_probability param to class

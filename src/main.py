@@ -24,16 +24,16 @@ x_test = scaler.transform(x_test)
 model = NeuralNetwork()
 
 # testing crossover with debugger
-# ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="single_point")  # single point
+ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="single_point")  # single point
 # ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="two_points")    # two points
 # ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="uniform")       # uniform
 # ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="ble")   # wrong crossover type
-# ga.generate_population()
-# # parents = ga.select_roulette()
-# parents = np.random.rand(ga.population_size, 151)
-# print(f"start population: {parents}")
-# child_generation = ga.make_crossover(parents)
-# print(f"child population: {child_generation}")
+ga.generate_population()
+# parents = ga.select_roulette()
+parents = np.random.rand(ga.population_size, 151)
+print(f"start population: {parents}")
+child_generation = ga.make_crossover(parents)
+print(f"child population: {child_generation}")
 
 
 # chromosome = ga.population[0]
