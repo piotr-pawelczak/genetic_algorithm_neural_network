@@ -6,6 +6,7 @@ from operator import index
 import numpy as np
 from neural_network import NeuralNetwork
 from typing import Tuple
+import random
 
 #pylint: disable=too-many-arguments, line-too-long
 
@@ -20,7 +21,7 @@ class GeneticAlgorithm():
     """
 
     def __init__(self, network: NeuralNetwork, x_train: np.ndarray, y_train: np.ndarray, population_size: int,
-                 num_parents: int, metric_type: str, crossover_type: str = "single_point"):
+                 num_parents: int, metric_type: str, crossover_type: str = "single_point", mutation_type: str = "uniform"):
         self.network = network
         self.population_size = population_size
         self.x_train = x_train
@@ -28,6 +29,7 @@ class GeneticAlgorithm():
         self.num_parents = num_parents
         self.metric_type = metric_type
         self.crossover_type = crossover_type
+        self.mutation_type = mutation_type
 
         self.population = None
 
@@ -241,3 +243,93 @@ class GeneticAlgorithm():
             new_population[population_cnt] = child_chromosome
 
         return new_population
+
+    def make_crossover(self, child_generation: np.ndarray) -> np.ndarray:
+        """ Make mutation on child generation after crossover.
+
+        Args:
+            child_generation (np.ndarray): Child generation after crossover.
+
+        Returns:
+            np.ndarray: Child generation after mutation.
+        """
+        valid_mutation_types = ["uniform", "swap", "inverse", "boundary"]
+
+        if self.mutation_type not in valid_mutation_types:
+            raise ValueError(f"Given mutation_type: {self.crossover_type} is invalid.\n Valid mutation types: "
+                             f"{valid_mutation_types}")
+
+        elif self.crossover_type == "uniform":
+            child_generation = self.mutation_uniform(child_generation)
+        elif self.crossover_type == "swap":
+            child_generation = self.mutation_swap(child_generation)
+        elif self.crossover_type == "inverse":
+            child_generation = self.mutation_inverse(child_generation)
+        elif self.crossover_type == "boundary":
+            child_generation = self.mutation_boundary(child_generation)
+        return child_generation
+
+    def mutation_uniform(child_generation: np.ndarray) -> np.ndarray:
+        """ Change value of one random gene in chromosome.
+
+        Args:
+            child_generation (np.ndarray): Child generation after crossover.
+
+        Returns:
+            np.ndarray: Child generation after mutation.
+        """
+        for chromosome in range(child_generation.shape[0]):
+            random_index = np.randint(0, child_generation.shape[0])
+            random_value = np.random.uniform(-1.0, 1.0, 1) #TODO do ustalenia jakie tu wartości
+            child_generation[chromosome, random_index] = random_value
+        return child_generation
+
+    def mutation_swap(child_generation: np.ndarray) -> np.ndarray:
+        """ Swap two random genes values in chromosome.
+
+        Args:
+            child_generation (np.ndarray): Child generation after crossover.
+
+        Returns:
+            np.ndarray: Child generation after mutation.
+        """
+        for chromosome in range(child_generation.shape[0]):
+            random_indexes = random.sample(0, child_generation.shape[0], 2)
+            tmp = chromosome[random_indexes[0]]
+            child_generation[chromosome, random_indexes[0]] = chromosome[random_indexes[1]]
+            child_generation[chromosome, random_indexes[1]] = tmp
+        return child_generation
+
+    def mutation_inverse(child_generation: np.ndarray) -> np.ndarray:
+        """ Inverse one random gene value in chromosome.
+
+        Args:
+            child_generation (np.ndarray): Child generation after crossover.
+
+        Returns:
+            np.ndarray: Child generation after mutation.
+        """
+        for chromosome in range(child_generation.shape[0]):
+            random_index = np.randint(0, child_generation.shape[0])
+            child_generation[chromosome, random_index] = -(child_generation[chromosome, random_index])
+        return child_generation
+
+    def mutation_boundary(child_generation: np.ndarray) -> np.ndarray:
+        """ Boundary mutation, we select a random gene from our chromosome and assign the upper bound or the lower bound to it.
+
+        Args:
+            child_generation (np.ndarray): Child generation after crossover.
+
+        Returns:
+            np.ndarray: Child generation after mutation.
+        """
+        lower_bound = -1.0
+        upper_bound = 1.0
+        for chromosome in range(child_generation.shape[0]):
+            random_index = np.randint(0, child_generation.shape[0])
+            tmp = chromosome[random_index]
+            if tmp >= 0.5:
+                child_generation[chromosome, random_index] = upper_bound
+            else:
+                child_generation[chromosome, random_index] = lower_bound
+        return child_generation
