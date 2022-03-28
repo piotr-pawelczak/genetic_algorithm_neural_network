@@ -256,7 +256,7 @@ class GeneticAlgorithm():
         valid_mutation_types = ["uniform", "swap", "inverse", "boundary"]
 
         if self.mutation_type not in valid_mutation_types:
-            raise ValueError(f"Given mutation_type: {self.crossover_type} is invalid.\n Valid mutation types: "
+            raise ValueError(f"Given mutation_type: {self.mutation_type} is invalid.\n Valid mutation types: "
                              f"{valid_mutation_types}")
 
         elif self.crossover_type == "uniform":
