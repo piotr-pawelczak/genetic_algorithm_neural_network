@@ -259,13 +259,13 @@ class GeneticAlgorithm():
             raise ValueError(f"Given mutation_type: {self.mutation_type} is invalid.\n Valid mutation types: "
                              f"{valid_mutation_types}")
 
-        elif self.crossover_type == "uniform":
+        elif self.mutation_type == "uniform":
             child_generation = self.mutation_uniform(child_generation)
-        elif self.crossover_type == "swap":
+        elif self.mutation_type == "swap":
             child_generation = self.mutation_swap(child_generation)
-        elif self.crossover_type == "inverse":
+        elif self.mutation_type == "inverse":
             child_generation = self.mutation_inverse(child_generation)
-        elif self.crossover_type == "boundary":
+        elif self.mutation_type == "boundary":
             child_generation = self.mutation_boundary(child_generation)
         return child_generation
 
