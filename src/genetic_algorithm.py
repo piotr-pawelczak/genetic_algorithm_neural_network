@@ -244,7 +244,7 @@ class GeneticAlgorithm():
 
         return new_population
 
-    def make_crossover(self, child_generation: np.ndarray) -> np.ndarray:
+    def make_mutation(self, child_generation: np.ndarray) -> np.ndarray:
         """ Make mutation on child generation after crossover.
 
         Args:
