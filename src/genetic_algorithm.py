@@ -246,10 +246,8 @@ class GeneticAlgorithm():
 
     def make_mutation(self, child_generation: np.ndarray) -> np.ndarray:
         """ Make mutation on child generation after crossover.
-
         Args:
             child_generation (np.ndarray): Child generation after crossover.
-
         Returns:
             np.ndarray: Child generation after mutation.
         """
@@ -294,9 +292,9 @@ class GeneticAlgorithm():
             np.ndarray: Child generation after mutation.
         """
         for chromosome in range(child_generation.shape[0]):
-            random_indexes = random.sample(0, child_generation.shape[0], 2)
-            tmp = chromosome[random_indexes[0]]
-            child_generation[chromosome, random_indexes[0]] = chromosome[random_indexes[1]]
+            random_indexes = random.sample(range(0, child_generation.shape[0]), 2)
+            tmp = child_generation[chromosome, random_indexes[0]]
+            child_generation[chromosome, random_indexes[0]] = child_generation[chromosome, random_indexes[1]]
             child_generation[chromosome, random_indexes[1]] = tmp
         return child_generation
 
@@ -327,7 +325,7 @@ class GeneticAlgorithm():
         upper_bound = 1.0
         for chromosome in range(child_generation.shape[0]):
             random_index = random.randint(0, child_generation.shape[0])
-            tmp = chromosome[random_index]
+            tmp = child_generation[chromosome, random_index]
             if tmp >= 0.5:
                 child_generation[chromosome, random_index] = upper_bound
             else:
