@@ -269,7 +269,7 @@ class GeneticAlgorithm():
             child_generation = self.mutation_boundary(child_generation)
         return child_generation
 
-    def mutation_uniform(child_generation: np.ndarray) -> np.ndarray:
+    def mutation_uniform(self, child_generation: np.ndarray) -> np.ndarray:
         """ Change value of one random gene in chromosome.
 
         Args:
@@ -284,7 +284,7 @@ class GeneticAlgorithm():
             child_generation[chromosome, random_index] = random_value
         return child_generation
 
-    def mutation_swap(child_generation: np.ndarray) -> np.ndarray:
+    def mutation_swap(self, child_generation: np.ndarray) -> np.ndarray:
         """ Swap two random genes values in chromosome.
 
         Args:
@@ -300,7 +300,7 @@ class GeneticAlgorithm():
             child_generation[chromosome, random_indexes[1]] = tmp
         return child_generation
 
-    def mutation_inverse(child_generation: np.ndarray) -> np.ndarray:
+    def mutation_inverse(self, child_generation: np.ndarray) -> np.ndarray:
         """ Inverse one random gene value in chromosome.
 
         Args:
@@ -314,7 +314,7 @@ class GeneticAlgorithm():
             child_generation[chromosome, random_index] = -(child_generation[chromosome, random_index])
         return child_generation
 
-    def mutation_boundary(child_generation: np.ndarray) -> np.ndarray:
+    def mutation_boundary(self, child_generation: np.ndarray) -> np.ndarray:
         """ Boundary mutation, we select a random gene from our chromosome and assign the upper bound or the lower bound to it.
 
         Args:
