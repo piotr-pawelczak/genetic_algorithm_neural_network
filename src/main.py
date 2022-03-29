@@ -24,20 +24,24 @@ x_test = scaler.transform(x_test)
 model = NeuralNetwork()
 
 # testing crossover with debugger
-ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="single_point")  # single point
+ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy")  # single point
 # ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="two_points")    # two points
 # ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="uniform")       # uniform
 # ga = GeneticAlgorithm(model, x_train, y_train, 100, 50, "accuracy", crossover_type="ble")   # wrong crossover type
+
 ga.generate_population()
-# parents = ga.select_roulette()
-parents = np.random.rand(ga.population_size, 151)
-print(f"start population: {parents}")
+acc = ga.get_fitness(ga.population[0])
+print(f"acc before: {acc}")
+parents = ga.select_parents()
+# print(f"start population: {parents}")
 child_generation = ga.make_crossover(parents)
-print(f"child population: {child_generation}")
+# print(f"child population: {child_generation}")
+mutated = ga.make_mutation(child_generation)
+# print(f"mutated: {mutated}")
 
-
-# chromosome = ga.population[0]
-# loss = ga.get_fitness(model, chromosome, 'loss')
-# accuracy = ga.get_fitness(model, chromosome, 'accuracy')
+chromosome = mutated[0]
+# loss = ga.get_fitness(chromosome, 'loss')
+accuracy = ga.get_fitness(chromosome)
 # print(f'{accuracy} - {loss}')
+print(f'acc after {accuracy}')
 

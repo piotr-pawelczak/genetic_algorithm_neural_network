@@ -10,6 +10,9 @@ import random
 
 #pylint: disable=too-many-arguments, line-too-long
 
+CHROMOSOME_SIZE = 151
+
+
 class GeneticAlgorithm():
     """TODO class docstring
 
@@ -21,13 +24,15 @@ class GeneticAlgorithm():
     """
 
     def __init__(self, network: NeuralNetwork, x_train: np.ndarray, y_train: np.ndarray, population_size: int,
-                 num_parents: int, metric_type: str, crossover_type: str = "single_point", mutation_type: str = "uniform"):
+                 num_parents: int, metric_type: str, select_parents_type: str = "elite",
+                 crossover_type: str = "single_point", mutation_type: str = "uniform"):
         self.network = network
         self.population_size = population_size
         self.x_train = x_train
         self.y_train = y_train
         self.num_parents = num_parents
         self.metric_type = metric_type
+        self.select_parents_type = select_parents_type
         self.crossover_type = crossover_type
         self.mutation_type = mutation_type
 
@@ -42,7 +47,7 @@ class GeneticAlgorithm():
             max_value (np.float32, optional): maximum value of gene. Defaults to 1.
         """
         # TODO change hardcoded value (151) to class parameter or get it directly from model object
-        random_population = np.random.uniform(low=min_value, high=max_value, size=(self.population_size, 151))
+        random_population = np.random.uniform(low=min_value, high=max_value, size=(self.population_size, CHROMOSOME_SIZE))
         self.population = random_population
 
     def get_fitness(self, chromosome: np.ndarray, batch_size=10) -> float:
@@ -50,7 +55,6 @@ class GeneticAlgorithm():
         Return fitness value of given chromosome
 
         Args:
-            network (NeuralNetwork): NeuralNetwork object
             chromosome (np.ndarray): chromosome contains weights which are passed to model
             batch_size (int, optional): batch_size. Defaults to 10.
 
@@ -60,20 +64,32 @@ class GeneticAlgorithm():
         Returns:
             float: value of loss or accuracy transformed to fitness
         """
-
+        valid_metric_types = ['loss', 'accuracy']
+        fitness = None
         self.network.set_weights(chromosome)
-
-        if self.metric_type not in ['loss', 'accuracy']:
-            raise ValueError('metric_type should be loss or accuracy')
-
         if self.metric_type == 'accuracy':
             fitness = self.network.get_accuracy(self.x_train, self.y_train, batch_size)
         elif self.metric_type == 'loss':
             loss = self.network.get_loss(self.x_train, self.y_train, batch_size)
             fitness = 1 / (loss + 0.000001)
+        else:
+            raise ValueError('metric_type should be loss or accuracy')
         return fitness
 
     """ PARENT SELECT """
+    def select_parents(self) -> np.ndarray:
+        """
+        Make parents select dependant on select_parents attribute
+        :return:
+        """
+        valid_parents_select_types = ["roulette", "elite"]
+        if self.select_parents_type == "roulette":
+            return self.select_roulette()
+        elif self.select_parents_type == "elite":
+            return self.select_elite()
+        else:
+            raise ValueError(f"Given select_parents_type: {self.select_parents_type} is invalid.\n "
+                             f"Valid select parents types: {valid_parents_select_types}")
 
     def select_roulette(self) -> np.ndarray:
         """
@@ -83,11 +99,14 @@ class GeneticAlgorithm():
         Returns:
             np.ndarray: array of parents selected by roulette wheel selection method
         """
-        population_fitness = list(map(lambda chromosome: self.get_fitness(chromosome, self.metric_type), self.population))
+        population_fitness = list(map(lambda chromosome: self.get_fitness(chromosome), self.population))
         total_fitness = sum(population_fitness)
 
         chromosome_probabilities = [chromosome_fitness/total_fitness for chromosome_fitness in population_fitness]
-        return np.random.choice(self.population, size=self.num_parents, p=chromosome_probabilities, replace=False)
+        selected_parent_idx = np.random.choice(range(self.population_size), size=self.num_parents,
+                                               p=chromosome_probabilities, replace=False)
+        selected_parents = self.population[selected_parent_idx]
+        return selected_parents
 
     def select_elite(self) -> np.ndarray:
         """
@@ -97,12 +116,12 @@ class GeneticAlgorithm():
         Returns:
             np.ndarray: array of parents selected by roulette wheel selection method
         """
-        elite_population = []
-        population_fitness = list(map(lambda chromosome: self.get_fitness(chromosome, self.metric_type), self.population))
+        elite_population = np.zeros((self.num_parents, CHROMOSOME_SIZE))
+        population_fitness = list(map(lambda chromosome: self.get_fitness(chromosome), self.population))
         for i in range(self.num_parents):
-            index = population_fitness.index(max(population_fitness))
-            elite_population.append(self.population[index])
-            population_fitness[index]=-99999999
+            max_index = population_fitness.index(max(population_fitness))
+            elite_population[i] = self.population[max_index]
+            population_fitness[max_index] = -420
         return elite_population
 
     """ CROSSOVER """
