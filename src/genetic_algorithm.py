@@ -2,13 +2,12 @@
 TODO module docstring
 """
 
-from operator import index
+import random
+from typing import Tuple
 import numpy as np
 from neural_network import NeuralNetwork
-from typing import Tuple
-import random
 
-#pylint: disable=too-many-arguments, line-too-long
+#pylint: disable=too-many-arguments, line-too-long, unnecessary-lambda
 
 CHROMOSOME_SIZE = 151
 
@@ -73,10 +72,10 @@ class GeneticAlgorithm():
             loss = self.network.get_loss(self.x_train, self.y_train, batch_size)
             fitness = 1 / (loss + 0.000001)
         else:
-            raise ValueError('metric_type should be loss or accuracy')
+            raise ValueError(f'metric_type should be {valid_metric_types}')
         return fitness
 
-    """ PARENT SELECT """
+
     def select_parents(self) -> np.ndarray:
         """
         Make parents select dependant on select_parents attribute
@@ -124,7 +123,6 @@ class GeneticAlgorithm():
             population_fitness[max_index] = -420
         return elite_population
 
-    """ CROSSOVER """
     # TODO consider adding crossover_probability param to class
 
     def make_crossover(self, selected_parents: np.ndarray) -> None:
