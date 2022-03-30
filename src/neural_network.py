@@ -2,60 +2,56 @@
 TODO Module docstring
 """
 
+#pylint: disable=invalid-name
+
 from typing import List
 from keras import Sequential
 from keras.layers import Dense
+from keras.utils.layer_utils import count_params
 import numpy as np
 
 class NeuralNetwork:
     """ TODO class docstring
     """
 
-    def __init__(self):
-        """
-        Initialize neural network with:
-        - 13 units in input layer
-        - 10 units in hidden dense layer with relu activation function
-        - 1 unit in output dense layer with sigmoid activation function
-        """        
+    def __init__(self, num_of_features):
+
         self.model = Sequential([
-            Dense(10, input_shape=(13,), activation="relu"),
+            Dense(10, input_shape=(num_of_features,), activation="relu"),
             Dense(1, activation="sigmoid")
         ])
 
     def set_weights(self, weights: np.ndarray) -> None:
-        """
-        Set given weights to neural network
+        """ TODO
 
         Args:
-            weights (np.ndarray): Numpy array of shape (151,) contains weights of neural network to set
-                                  0 - 129     weights between input and hidden layer
-                                  130 - 139   biases of hidden layer
-                                  140 - 149   weights between hidden and output layer
-                                  150         bias of output layer
+            weights (np.ndarray): _description_
 
         Raises:
-            ValueError: raise if shape of weights if other than (151,)
-        """        
-    
-        if weights.shape != (151,):
-            raise ValueError('Shape of weights must be (151,)')
-
-        weight_1 = weights[0:130].reshape((13,10))
-        bias_1 = weights[130:140].reshape((10,))
-        weight_2 = weights[140:150].reshape((10,1))
-        bias_2 = weights[150].reshape((1,))
-
-        parameters = [weight_1, bias_1, weight_2, bias_2]
-        self.model.set_weights(parameters)
-    
-    def get_weights(self) -> List[np.ndarray]:
+            ValueError: _description_
         """
-        Return weights of neural network
+        total_parameters_count = count_params(self.model.trainable_weights)
+        shapes_of_weights = [elem.shape for elem in self.get_weights()]
+
+        if weights.shape != (total_parameters_count,):
+            raise ValueError(f'Shape of weights must be ({total_parameters_count},)')
+
+        parameters = []
+        current_index = 0
+        for inx, elem in enumerate(shapes_of_weights):
+            parameters_size = elem[0] if len(elem) == 1 else elem[0] * elem[1]
+            weight = weights[current_index:current_index+parameters_size].reshape(shapes_of_weights[inx])
+            parameters.append(weight)
+            current_index += parameters_size
+
+        self.model.set_weights(parameters)
+
+    def get_weights(self) -> List[np.ndarray]:
+        """ TODO
 
         Returns:
-            List[np.ndarray]: List contains 4 np.ndarray with weights and biases
-        """        
+            List[np.ndarray]: _description_
+        """
         return self.model.get_weights()
 
     def get_accuracy(self, x: np.ndarray, y: np.ndarray, batch_size=10) -> float:
@@ -69,7 +65,7 @@ class NeuralNetwork:
 
         Returns:
             float: accuracy value
-        """         
+        """
         self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
         acc = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)[1]
         return acc
@@ -85,7 +81,7 @@ class NeuralNetwork:
 
         Returns:
             float: loss value
-        """        
+        """
         self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
         loss = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)[0]
         return loss
