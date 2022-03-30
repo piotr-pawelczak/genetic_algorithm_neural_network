@@ -345,7 +345,7 @@ class GeneticAlgorithm():
         for chromosome in range(child_generation.shape[0]):
             random_index = random.randint(0, child_generation.shape[0])
             tmp = child_generation[chromosome, random_index]
-            if tmp >= 0.5:
+            if tmp >= 0:
                 child_generation[chromosome, random_index] = upper_bound
             else:
                 child_generation[chromosome, random_index] = lower_bound
