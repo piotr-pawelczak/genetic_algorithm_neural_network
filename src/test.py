@@ -21,12 +21,12 @@ x_test = scaler.transform(x_test)
 model = NeuralNetwork(num_of_features=13)
 ga = GeneticAlgorithm(model, x_train, y_train)
 
-ga.population_size = 100
-ga.num_parents = 50
-ga.iterations = 3
+ga.population_size = 200
+ga.num_parents = 40
+ga.iterations = 15
 ga.metric_type = "accuracy"
 ga.select_parents_type = "elite"
-ga.crossover_type = "single_point"
-ga.mutation_type = "uniform"
+ga.crossover_type = "uniform"
+ga.mutation_type = "swap"
 
 ga.run_algorithm()
