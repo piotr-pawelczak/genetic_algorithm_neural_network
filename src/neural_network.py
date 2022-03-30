@@ -21,6 +21,10 @@ class NeuralNetwork:
             Dense(1, activation="sigmoid")
         ])
 
+    def get_total_parameters_count(self):
+        total_parameters_count = count_params(self.model.trainable_weights)
+        return total_parameters_count
+
     def set_weights(self, weights: np.ndarray) -> None:
         """ TODO
 

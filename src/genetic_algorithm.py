@@ -20,11 +20,18 @@ class GeneticAlgorithm():
     Single point: Implemented using the single_point_crossover() method.
     Two points: Implemented using the two_points_crossover() method.
     Uniform: Implemented using the uniform_crossover() method.
+
+
+    Methods:
+    - generate_population() - generate random initial population, update self.population
+    - get_fitness() - get fitness of given chromosome based on type [loss, accuracy], returns float
+    - select_parents() - call select_roulette() or select_elite() based on self.select_parents_type returns num_of_parents sized list 
+    - 
     """
 
-    def __init__(self, network: NeuralNetwork, x_train: np.ndarray, y_train: np.ndarray, population_size: int,
-                 num_parents: int, metric_type: str, select_parents_type: str = "elite",
-                 crossover_type: str = "single_point", mutation_type: str = "uniform"):
+    def __init__(self, network: NeuralNetwork, x_train: np.ndarray, y_train: np.ndarray, population_size: int = 100,
+                 num_parents: int = 50, metric_type: str = "accuracy", select_parents_type: str = "elite",
+                 crossover_type: str = "single_point", mutation_type: str = "uniform", iterations: int = 10):
         self.network = network
         self.population_size = population_size
         self.x_train = x_train
@@ -34,8 +41,10 @@ class GeneticAlgorithm():
         self.select_parents_type = select_parents_type
         self.crossover_type = crossover_type
         self.mutation_type = mutation_type
+        self.iterations = iterations
 
         self.population = None
+        self.chromosome_size = self.network.get_total_parameters_count()
 
     def generate_population(self, min_value: np.float32 = -1, max_value: np.float32 = 1):
         """
@@ -81,14 +90,19 @@ class GeneticAlgorithm():
         Make parents select dependant on select_parents attribute
         :return:
         """
+        selected_parents = None
         valid_parents_select_types = ["roulette", "elite"]
+
         if self.select_parents_type == "roulette":
-            return self.select_roulette()
+            selected_parents = self.select_roulette()
+
         elif self.select_parents_type == "elite":
-            return self.select_elite()
-        else:
+            selected_parents = self.select_elite()
+
+        elif self.select_parents_type not in valid_parents_select_types:
             raise ValueError(f"Given select_parents_type: {self.select_parents_type} is invalid.\n "
                              f"Valid select parents types: {valid_parents_select_types}")
+        return selected_parents
 
     def select_roulette(self) -> np.ndarray:
         """
@@ -125,30 +139,30 @@ class GeneticAlgorithm():
 
     # TODO consider adding crossover_probability param to class
 
-    def make_crossover(self, selected_parents: np.ndarray) -> None:
+    def make_crossover(self, selected_parents: np.ndarray):
         """
         Make crossover on selected parents array
         :param selected_parents: array with best possible parents chromosomes
         :return:
         """
-        child_generation = None
+        first_child, second_child = None, None
+        valid_crossover_types = ["single_point", "two_points", "uniform"]
+
         first_parent_chromosome, second_parent_chromosome = self.get_parents_for_crossover(selected_parents)
 
-        valid_crossover_types = ["single_point", "two_points", "uniform"]
+        if self.crossover_type == "single_point":
+            first_child, second_child = self.single_point_crossover(first_parent_chromosome, second_parent_chromosome)
+        elif self.crossover_type == "two_points":
+            first_child, second_child = self.two_points_crossover(first_parent_chromosome, second_parent_chromosome)
+        elif self.crossover_type == "uniform":
+            first_child = self.uniform_crossover(first_parent_chromosome, second_parent_chromosome)
 
         if self.crossover_type not in valid_crossover_types:
             raise ValueError(f"Given crossover_type: {self.crossover_type} is invalid.\n Valid crossover types: "
                              f"{valid_crossover_types}")
 
-        elif self.crossover_type == "single_point":
-            child_generation = self.single_point_crossover(first_parent_chromosome, second_parent_chromosome)
-        elif self.crossover_type == "two_points":
-            child_generation = self.two_points_crossover(first_parent_chromosome, second_parent_chromosome)
-        elif self.crossover_type == "uniform":
-            child_generation = self.uniform_crossover(first_parent_chromosome, second_parent_chromosome)
-
         # TODO consider changing child_generation/new_generation variables in crossover methods to self.population
-        return child_generation
+        return first_child, second_child
 
     @staticmethod
     def get_parents_for_crossover(selected_parents: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -160,20 +174,6 @@ class GeneticAlgorithm():
         parents = selected_parents[np.random.randint(selected_parents.shape[0], size=2), :]
         return parents[0], parents[1]
 
-    def create_new_population(self, first_child_chromosome: np.ndarray,
-                              second_child_chromosome: np.ndarray) -> np.ndarray:
-        """
-        Create new population based on children's chromosomes
-        :param first_child_chromosome: array with first child genes
-        :param second_child_chromosome: array with second child genes
-        :return:
-        """
-        # TODO check odd population values - possible errors
-        new_population = np.zeros((self.population_size, first_child_chromosome.size))
-        for population_cnt in range(0, self.population_size, 2):
-            new_population[population_cnt] = first_child_chromosome
-            new_population[population_cnt+1] = second_child_chromosome
-        return new_population
 
     def single_point_crossover(self, first_parent_chromosome: np.ndarray,
                                second_parent_chromosome: np.ndarray) -> np.ndarray:
@@ -196,9 +196,7 @@ class GeneticAlgorithm():
         second_child_chromosome = np.concatenate((second_parent_chromosome[0:crossover_point],
                                                  first_parent_chromosome[crossover_point:]))
 
-        new_population = self.create_new_population(first_child_chromosome, second_child_chromosome)
-
-        return new_population
+        return first_child_chromosome, second_child_chromosome
 
     def two_points_crossover(self, first_parent_chromosome: np.ndarray,
                              second_parent_chromosome: np.ndarray) -> np.ndarray:
@@ -234,9 +232,7 @@ class GeneticAlgorithm():
                                                   first_parent_chromosome[lower_crossover_point:greater_crossover_point],
                                                   second_parent_chromosome[greater_crossover_point:]))
 
-        new_population = self.create_new_population(first_child_chromosome, second_child_chromosome)
-
-        return new_population
+        return first_child_chromosome, second_child_chromosome
 
     def uniform_crossover(self, first_parent_chromosome: np.ndarray, second_parent_chromosome: np.ndarray) -> np.ndarray:
         """
@@ -255,11 +251,27 @@ class GeneticAlgorithm():
             randomly_selected_parent = first_parent_chromosome if random_int else second_parent_chromosome
             child_chromosome[gene_cnt] = randomly_selected_parent[gene_cnt]
 
-        new_population = np.zeros((self.population_size, chromosome_size))
-        for population_cnt in range(self.population_size):
-            new_population[population_cnt] = child_chromosome
+        return child_chromosome
+
+
+    def create_child_generation(self, selected_parents):
+        new_population = np.zeros((self.population_size, self.chromosome_size))
+        
+        single_child_methods = ["uniform"]
+        double_child_methods = ["single_point", "two_points"]
+        
+        if self.crossover_type in double_child_methods:
+            for inx in range(0, self.population_size, 2):
+                first_child, second_child = self.make_crossover(selected_parents)
+                new_population[inx] = first_child
+                new_population[inx+1] = second_child
+        elif self.crossover_type in single_child_methods:
+            for inx in range(0, self.population_size):
+                child, _ = self.make_crossover(selected_parents)
+                new_population[inx] = child
 
         return new_population
+
 
     def make_mutation(self, child_generation: np.ndarray) -> np.ndarray:
         """ Make mutation on child generation after crossover.
@@ -269,12 +281,9 @@ class GeneticAlgorithm():
             np.ndarray: Child generation after mutation.
         """
         valid_mutation_types = ["uniform", "swap", "inverse", "boundary"]
+        child_generation = None
 
-        if self.mutation_type not in valid_mutation_types:
-            raise ValueError(f"Given mutation_type: {self.mutation_type} is invalid.\n Valid mutation types: "
-                             f"{valid_mutation_types}")
-
-        elif self.mutation_type == "uniform":
+        if self.mutation_type == "uniform":
             child_generation = self.mutation_uniform(child_generation)
         elif self.mutation_type == "swap":
             child_generation = self.mutation_swap(child_generation)
@@ -282,9 +291,15 @@ class GeneticAlgorithm():
             child_generation = self.mutation_inverse(child_generation)
         elif self.mutation_type == "boundary":
             child_generation = self.mutation_boundary(child_generation)
+
+        if self.mutation_type not in valid_mutation_types:
+            raise ValueError(f"Given mutation_type: {self.mutation_type} is invalid.\n Valid mutation types: "
+                             f"{valid_mutation_types}")
+
         return child_generation
 
-    def mutation_uniform(self, child_generation: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def mutation_uniform(child_generation: np.ndarray) -> np.ndarray:
         """ Change value of one random gene in chromosome.
 
         Args:
@@ -299,7 +314,8 @@ class GeneticAlgorithm():
             child_generation[chromosome, random_index] = random_value
         return child_generation
 
-    def mutation_swap(self, child_generation: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def mutation_swap(child_generation: np.ndarray) -> np.ndarray:
         """ Swap two random genes values in chromosome.
 
         Args:
@@ -315,7 +331,8 @@ class GeneticAlgorithm():
             child_generation[chromosome, random_indexes[1]] = tmp
         return child_generation
 
-    def mutation_inverse(self, child_generation: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def mutation_inverse(child_generation: np.ndarray) -> np.ndarray:
         """ Inverse one random gene value in chromosome.
 
         Args:
@@ -329,7 +346,8 @@ class GeneticAlgorithm():
             child_generation[chromosome, random_index] = -(child_generation[chromosome, random_index])
         return child_generation
 
-    def mutation_boundary(self, child_generation: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def mutation_boundary(child_generation: np.ndarray) -> np.ndarray:
         """ Boundary mutation, we select a random gene from our chromosome and assign the upper bound or the lower bound to it.
 
         Args:
@@ -348,3 +366,19 @@ class GeneticAlgorithm():
             else:
                 child_generation[chromosome, random_index] = lower_bound
         return child_generation
+
+
+    def run_algorithm(self):
+
+        self.generate_population()
+        print(self.get_fitness(self.population[0]))
+
+        for iteration in range(self.iterations):
+            print(f"Iteration: {iteration}")
+            selected_parents = self.select_parents()
+            crossover_generation = self.create_child_generation(selected_parents)
+            mutated_generation = self.make_mutation(crossover_generation)
+            self.population = mutated_generation
+            print(self.get_fitness(selected_parents[0]))
+            
+
