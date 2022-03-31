@@ -6,6 +6,7 @@ import random
 from typing import Tuple
 import numpy as np
 from neural_network import NeuralNetwork
+from decorators import measure_time
 
 #pylint: disable=too-many-arguments, line-too-long, unnecessary-lambda
 
@@ -280,7 +281,7 @@ class GeneticAlgorithm():
         Returns:
             np.ndarray: Child generation after mutation.
         """
-        valid_mutation_types = ["uniform", "swap", "inverse", "boundary"]
+        valid_mutation_types = ["uniform", "swap", "inverse", "boundary", "percent"]
         mutated_generation = None
 
         if self.mutation_type == "uniform":
@@ -291,6 +292,8 @@ class GeneticAlgorithm():
             mutated_generation = self.mutation_inverse(child_generation)
         elif self.mutation_type == "boundary":
             mutated_generation = self.mutation_boundary(child_generation)
+        elif self.mutation_type == "percent":
+            mutated_generation = self.mutation_percent(child_generation)
 
         if self.mutation_type not in valid_mutation_types:
             raise ValueError(f"Given mutation_type: {self.mutation_type} is invalid.\n Valid mutation types: "
@@ -363,7 +366,13 @@ class GeneticAlgorithm():
                 child_generation[chromosome, random_index] = lower_bound
         return child_generation
 
+    def mutation_percent(self, child_generation: np.ndarray) -> np.ndarray:
+    
+        for chromosome_inx in range(self.population_size):
+            child_generation[chromosome_inx] *= random.uniform(0.99, 1.01)
+        return child_generation
 
+    @measure_time
     def run_algorithm(self):
 
         self.generate_population()

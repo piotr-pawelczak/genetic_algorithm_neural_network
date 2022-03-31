@@ -9,6 +9,7 @@ from keras import Sequential
 from keras.layers import Dense
 from keras.utils.layer_utils import count_params
 import numpy as np
+from decorators import measure_time
 
 class NeuralNetwork:
     """ TODO class docstring
@@ -20,6 +21,7 @@ class NeuralNetwork:
             Dense(10, input_shape=(num_of_features,), activation="relu"),
             Dense(1, activation="sigmoid")
         ])
+        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
     def get_total_parameters_count(self):
         total_parameters_count = count_params(self.model.trainable_weights)
@@ -70,7 +72,7 @@ class NeuralNetwork:
         Returns:
             float: accuracy value
         """
-        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
         acc = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)[1]
         return acc
 
@@ -86,6 +88,6 @@ class NeuralNetwork:
         Returns:
             float: loss value
         """
-        self.model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
         loss = self.model.evaluate(x, y, batch_size=batch_size, verbose=0)[0]
         return loss
