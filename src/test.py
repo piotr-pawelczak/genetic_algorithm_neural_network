@@ -5,28 +5,48 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 
 # Load data
 df = pd.read_csv('../heart.csv')
 df.rename(columns={'output': 'hearth_attack_chance'}, inplace=True)
-x = df.drop('hearth_attack_chance', axis=1)
+X = df.drop('hearth_attack_chance', axis=1)
 y = df['hearth_attack_chance']
-x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.7, random_state=1)
 
 # Scale data
 scaler = StandardScaler()
-x_train = scaler.fit_transform(x_train)
-x_test = scaler.transform(x_test)
+X = scaler.fit_transform(X)
 
 model = NeuralNetwork(num_of_features=13)
-ga = GeneticAlgorithm(model, x_train, y_train)
+ga = GeneticAlgorithm(model, X, y)
 
-ga.population_size = 200
-ga.num_parents = 40
+ga.population_size = 100
+ga.num_parents = 25
 ga.iterations = 15
 ga.metric_type = "accuracy"
 ga.select_parents_type = "elite"
-ga.crossover_type = "uniform"
+ga.crossover_type = "single_point"
 ga.mutation_type = "swap"
 
-ga.run_algorithm()
+best = ga.run_algorithm()
+
+# Plot results
+plt.figure(figsize=(16, 8))
+fmt = '%2.0f%%'
+yticks = mtick.FormatStrFormatter(fmt)
+plt.gca().yaxis.set_major_formatter(yticks)
+all_k = [i for i in range(1, ga.iterations+1)]
+
+plt.plot(all_k, [x[0]*100 for x in best], '-o', linewidth=3)
+plt.plot(all_k, [x[1]*100 for x in best], '-o', linewidth=3)
+
+plt.xticks(all_k)
+
+plt.legend(["Train", "Test"], frameon=False, fontsize=18)
+plt.xlabel("Iteration", fontsize=24)
+plt.ylabel("Accuracy", fontsize=24)
+
+plt.tick_params(axis='both', labelsize=22)
+plt.savefig(r'..\\accuracy.png')
+plt.show()

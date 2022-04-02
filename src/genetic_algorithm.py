@@ -3,10 +3,11 @@ TODO module docstring
 """
 
 import random
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
 from neural_network import NeuralNetwork
 from decorators import measure_time
+from sklearn.model_selection import train_test_split
 
 #pylint: disable=too-many-arguments, line-too-long, unnecessary-lambda
 
@@ -30,13 +31,13 @@ class GeneticAlgorithm():
     - 
     """
 
-    def __init__(self, network: NeuralNetwork, x_train: np.ndarray, y_train: np.ndarray, population_size: int = 100,
+    def __init__(self, network: NeuralNetwork, X: np.ndarray, Y: np.ndarray, population_size: int = 100,
                  num_parents: int = 50, metric_type: str = "accuracy", select_parents_type: str = "elite",
                  crossover_type: str = "single_point", mutation_type: str = "uniform", iterations: int = 10):
         self.network = network
         self.population_size = population_size
-        self.x_train = x_train
-        self.y_train = y_train
+        self.X = X
+        self.Y = Y
         self.num_parents = num_parents
         self.metric_type = metric_type
         self.select_parents_type = select_parents_type
@@ -73,39 +74,51 @@ class GeneticAlgorithm():
         Returns:
             float: value of loss or accuracy transformed to fitness
         """
+        X_train, X_test, y_train, y_test = train_test_split(self.X, self.Y, train_size=0.7, random_state=1)
         valid_metric_types = ['loss', 'accuracy']
-        fitness = None
+        fitness_train = None
+        fitness_test = None
         self.network.set_weights(chromosome)
         if self.metric_type == 'accuracy':
-            fitness = self.network.get_accuracy(self.x_train, self.y_train, batch_size)
+            fitness_train = self.network.get_accuracy(X_train, y_train, batch_size)
+            fitness_test = self.network.get_accuracy(X_test, y_test, batch_size)
         elif self.metric_type == 'loss':
-            loss = self.network.get_loss(self.x_train, self.y_train, batch_size)
-            fitness = 1 / (loss + 0.000001)
+            loss_train = self.network.get_loss(X_train, y_train, batch_size)
+            fitness_train = 1 / (loss_train + 0.000001)
+            loss_test = self.network.get_loss(X_test, y_test, batch_size)
+            fitness_test = 1 / (loss_test + 0.000001)
         else:
             raise ValueError(f'metric_type should be {valid_metric_types}')
-        return fitness
+        return fitness_train, fitness_test
 
+    def find_best_chromosome(self, results) -> Tuple[float, float, np.ndarray]:
+        best_chromosome = (0.0, 0.0, None)
+        for i in range(len(results)):
+            if results[i][0] > best_chromosome[0]:
+                best_chromosome = results[i]
+        return best_chromosome
 
-    def select_parents(self) -> np.ndarray:
+    def select_parents(self) -> Tuple[np.ndarray, Tuple[float, float, np.ndarray]]:
         """
         Make parents select dependant on select_parents attribute
         :return:
         """
         selected_parents = None
+        best_chromosome = None
         valid_parents_select_types = ["roulette", "elite"]
 
         if self.select_parents_type == "roulette":
             selected_parents = self.select_roulette()
 
         elif self.select_parents_type == "elite":
-            selected_parents = self.select_elite()
+            selected_parents, best_chromosome = self.select_elite()
 
         elif self.select_parents_type not in valid_parents_select_types:
             raise ValueError(f"Given select_parents_type: {self.select_parents_type} is invalid.\n "
                              f"Valid select parents types: {valid_parents_select_types}")
-        return selected_parents
+        return selected_parents, best_chromosome
 
-    def select_roulette(self) -> np.ndarray:
+    def select_roulette(self) -> Tuple[np.ndarray, Tuple[float, float, np.ndarray]]:
         """
         Args:
             num_parents (int): number of parents
@@ -113,16 +126,21 @@ class GeneticAlgorithm():
         Returns:
             np.ndarray: array of parents selected by roulette wheel selection method
         """
-        population_fitness = list(map(lambda chromosome: self.get_fitness(chromosome), self.population))
-        total_fitness = sum(population_fitness)
+        best_chromosome = None
+        population_fitness_train = list(map(lambda chromosome: self.get_fitness(chromosome)[0], self.population))
+        population_fitness_test = list(map(lambda chromosome: self.get_fitness(chromosome)[1], self.population))
+        total_fitness = sum(population_fitness_train)
 
-        chromosome_probabilities = [chromosome_fitness/total_fitness for chromosome_fitness in population_fitness]
+        all_results = list(zip(population_fitness_train, population_fitness_test, self.population))
+        best_chromosome = self.find_best_chromosome(all_results)
+
+        chromosome_probabilities = [chromosome_fitness/total_fitness for chromosome_fitness in population_fitness_train]
         selected_parent_idx = np.random.choice(range(self.population_size), size=self.num_parents,
                                                p=chromosome_probabilities, replace=False)
         selected_parents = self.population[selected_parent_idx]
-        return selected_parents
+        return selected_parents, best_chromosome
 
-    def select_elite(self) -> np.ndarray:
+    def select_elite(self) -> Tuple[np.ndarray, Tuple[float, float, np.ndarray]]:
         """
         Args:
             num_parents (int): number of parents
@@ -131,12 +149,18 @@ class GeneticAlgorithm():
             np.ndarray: array of parents selected by roulette wheel selection method
         """
         elite_population = np.zeros((self.num_parents, CHROMOSOME_SIZE))
-        population_fitness = list(map(lambda chromosome: self.get_fitness(chromosome), self.population))
+        best_chromosome = None
+        population_fitness_train = list(map(lambda chromosome: self.get_fitness(chromosome)[0], self.population))
+        population_fitness_test = list(map(lambda chromosome: self.get_fitness(chromosome)[1], self.population))
+
+        all_results = list(zip(population_fitness_train, population_fitness_test, self.population))
+        best_chromosome = self.find_best_chromosome(all_results)
+
         for i in range(self.num_parents):
-            max_index = population_fitness.index(max(population_fitness))
+            max_index = population_fitness_train.index(max(population_fitness_train))
             elite_population[i] = self.population[max_index]
-            population_fitness[max_index] = -420
-        return elite_population
+            population_fitness_train[max_index] = -420
+        return elite_population, best_chromosome
 
     # TODO consider adding crossover_probability param to class
 
@@ -373,17 +397,18 @@ class GeneticAlgorithm():
         return child_generation
 
     @measure_time
-    def run_algorithm(self):
+    def run_algorithm(self) -> List[Tuple[float, float, np.ndarray]]:
 
         self.generate_population()
-        print(self.get_fitness(self.population[0]))
+        best_results = []
+        best_chromosome = None
 
         for iteration in range(self.iterations):
-            print(f"Iteration: {iteration}")
-            selected_parents = self.select_parents()
+            print(f"Iteration: {iteration+1}")
+            selected_parents, best_chromosome = self.select_parents()
+            best_results.append(best_chromosome)
             crossover_generation = self.create_child_generation(selected_parents)
             mutated_generation = self.make_mutation(crossover_generation)
             self.population = mutated_generation
-            print(self.get_fitness(selected_parents[0]))
-            
-
+            print(best_chromosome[:2])
+        return best_results
