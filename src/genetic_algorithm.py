@@ -8,6 +8,8 @@ import numpy as np
 from neural_network import NeuralNetwork
 from decorators import measure_time
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 
 #pylint: disable=too-many-arguments, line-too-long, unnecessary-lambda
 
@@ -47,6 +49,7 @@ class GeneticAlgorithm():
 
         self.population = None
         self.chromosome_size = self.network.get_total_parameters_count()
+        self.best_results = []
 
     def generate_population(self, min_value: np.float32 = -1, max_value: np.float32 = 1):
         """
@@ -108,7 +111,7 @@ class GeneticAlgorithm():
         valid_parents_select_types = ["roulette", "elite"]
 
         if self.select_parents_type == "roulette":
-            selected_parents = self.select_roulette()
+            selected_parents, best_chromosome = self.select_roulette()
 
         elif self.select_parents_type == "elite":
             selected_parents, best_chromosome = self.select_elite()
@@ -397,18 +400,44 @@ class GeneticAlgorithm():
         return child_generation
 
     @measure_time
-    def run_algorithm(self) -> List[Tuple[float, float, np.ndarray]]:
+    def run_algorithm(self) -> None:
 
         self.generate_population()
-        best_results = []
         best_chromosome = None
 
         for iteration in range(self.iterations):
             print(f"Iteration: {iteration+1}")
             selected_parents, best_chromosome = self.select_parents()
-            best_results.append(best_chromosome)
+            self.best_results.append(best_chromosome)
             crossover_generation = self.create_child_generation(selected_parents)
             mutated_generation = self.make_mutation(crossover_generation)
             self.population = mutated_generation
             print(best_chromosome[:2])
-        return best_results
+
+    def plot_results(self) -> None:
+        all_k = [i for i in range(1, self.iterations+1)]
+        plt.figure(figsize=(16, 8))
+
+        if self.metric_type == "accuracy":
+            fmt = '%2.0f%%'
+            yticks = mtick.FormatStrFormatter(fmt)
+            plt.gca().yaxis.set_major_formatter(yticks)
+
+            plt.plot(all_k, [x[0]*100 for x in self.best_results], '-o', linewidth=3)
+            plt.plot(all_k, [x[1]*100 for x in self.best_results], '-o', linewidth=3)
+        else:
+            plt.plot(all_k, [x[0] for x in self.best_results], '-o', linewidth=3)
+            plt.plot(all_k, [x[1] for x in self.best_results], '-o', linewidth=3)
+
+        plt.xticks(all_k)
+
+        plt.legend(["Train", "Test"], frameon=False, fontsize=18)
+        plt.xlabel("Iteration", fontsize=24)
+        if self.metric_type == "accuracy":
+            plt.ylabel("Accuracy", fontsize=24)
+        else:
+            plt.ylabel("Loss", fontsize=24)
+
+        plt.tick_params(axis='both', labelsize=22)
+        plt.savefig(r'..\\accuracy.png')
+        plt.show()
