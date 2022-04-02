@@ -338,7 +338,7 @@ class GeneticAlgorithm():
             np.ndarray: Child generation after mutation.
         """
         for chromosome in range(self.population_size):
-            random_index = random.randint(0, self.chromosome_size)
+            random_index = random.randint(0, self.chromosome_size-1)
             random_value = np.random.uniform(-1.0, 1.0, 1) #TODO do ustalenia jakie tu wartości
             child_generation[chromosome, random_index] = random_value
         return child_generation
@@ -369,7 +369,7 @@ class GeneticAlgorithm():
             np.ndarray: Child generation after mutation.
         """
         for chromosome in range(self.population_size):
-            random_index = random.randint(0, self.chromosome_size)
+            random_index = random.randint(0, self.chromosome_size-1)
             child_generation[chromosome, random_index] = -(child_generation[chromosome, random_index])
         return child_generation
 
@@ -385,7 +385,7 @@ class GeneticAlgorithm():
         lower_bound = -1.0
         upper_bound = 1.0
         for chromosome in range(self.population_size):
-            random_index = random.randint(0, self.chromosome_size)
+            random_index = random.randint(0, self.chromosome_size-1)
             tmp = child_generation[chromosome, random_index]
             if tmp >= 0:
                 child_generation[chromosome, random_index] = upper_bound
