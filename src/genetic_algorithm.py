@@ -386,15 +386,22 @@ class GeneticAlgorithm():
         upper_bound = 1.0
         for chromosome in range(self.population_size):
             random_index = random.randint(0, self.chromosome_size-1)
-            tmp = child_generation[chromosome, random_index]
-            if tmp >= 0:
+            random_val = np.random.uniform(-1, 1)
+            if random_val >= 0:
                 child_generation[chromosome, random_index] = upper_bound
             else:
                 child_generation[chromosome, random_index] = lower_bound
         return child_generation
 
     def mutation_percent(self, child_generation: np.ndarray) -> np.ndarray:
-    
+        """ Percent mutation, we chagne values of all genes with random precent value from 0% do 1% in random side.
+
+        Args:
+            child_generation (np.ndarray): Child generation after crossover.
+
+        Returns:
+            np.ndarray: Child generation after mutation.
+        """
         for chromosome_inx in range(self.population_size):
             child_generation[chromosome_inx] *= random.uniform(0.99, 1.01)
         return child_generation
@@ -415,6 +422,8 @@ class GeneticAlgorithm():
             print(best_chromosome[:2])
 
     def plot_results(self) -> None:
+        """ Method for plotting results of genetic algorithm (accuracy for iteration).
+        """
         all_k = [i for i in range(1, self.iterations+1)]
         plt.figure(figsize=(16, 8))
         plt.title(f'Metric: {self.metric_type}, Crossover: {self.crossover_type}, Mutation: {self.mutation_type}, ' 
