@@ -417,7 +417,8 @@ class GeneticAlgorithm():
     def plot_results(self) -> None:
         all_k = [i for i in range(1, self.iterations+1)]
         plt.figure(figsize=(16, 8))
-
+        plt.title(f'Metric: {self.metric_type}, Crossover: {self.crossover_type}, Mutation: {self.mutation_type}, ' 
+        f'Selection: {self.select_parents_type}, Population size {self.population_size}, Number of parents: {self.num_parents}')
         if self.metric_type == "accuracy":
             fmt = '%2.0f%%'
             yticks = mtick.FormatStrFormatter(fmt)
