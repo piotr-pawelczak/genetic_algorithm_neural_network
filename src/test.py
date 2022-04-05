@@ -4,6 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+import random
+
+random.seed(1)
+np.random.seed(1)
 
 
 # Load data
@@ -19,9 +23,9 @@ X = scaler.fit_transform(X)
 model = NeuralNetwork(num_of_features=13)
 ga = GeneticAlgorithm(model, X, y)
 
-ga.population_size = 100
+ga.population_size = 50
 ga.num_parents = 25
-ga.iterations = 10
+ga.iterations = 3
 ga.metric_type = "accuracy"
 ga.select_parents_type = "elite"
 ga.crossover_type = "single_point"
